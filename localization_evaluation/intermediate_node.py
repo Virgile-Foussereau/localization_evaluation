@@ -37,13 +37,13 @@ class intermediate(Node):
         #subscribers
         self.gps_pose_sub = self.create_subscription(
         PoseWithCovarianceStamped,
-        '/gps_top/pose',
+        '/gps_bot/pose',
         self.gps_pose_callback,
         qos_profile_sensor_data)
 
         self.gps_orientation_sub = self.create_subscription(
         PoseWithCovarianceStamped,
-        '/gps_top/orientation',
+        '/gps_bot/orientation',
         self.gps_orientation_callback,
         qos_profile_sensor_data)
         
@@ -55,7 +55,7 @@ class intermediate(Node):
 
         self.imu_sub = self.create_subscription(
         Imu,
-        '/gps_top/imu',
+        '/gps_bot/imu',
         self.imu_callback,
         qos_profile_sensor_data)
 

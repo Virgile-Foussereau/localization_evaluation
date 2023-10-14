@@ -295,8 +295,8 @@ def main(args=None):
     parser.add_argument('--areas_gps_denied', '-a', nargs='+' , type=float, default=None, help='List of areas with center coordinates, widht and height x1 y1 w h .... (in meters) where gps is denied. Make sure to start Example: -a 0 0 10 10 will create a gps denied zone of 10x10m centered on (0,0). Default: None.')
     parser.add_argument('--random_gps_denied', type=bool, default=False, help='Randomly set gps denied zones. Default: False.')
     parser.add_argument('--show_plot', type=bool, default=True, help='Show plot after execution. Default: True.')
-    parser.add_argument('--save_plot', type=str, default='results_localization_test', help="Specifiy the file name to save the plot. Use 'None' to not save the plot. Default: None.")
-    parser.add_argument('--manual_prediction', type=bool, default=True, help="Compute and plot manual prediction for comparison. Default: False.")
+    parser.add_argument('--save_plot', type=str, default='results_localization_test', help="Specifiy the file name to save the plot. Use 'None' to not save the plot. Default: results_localization_test.png.")
+    parser.add_argument('--manual_prediction', type=bool, default=True, help="Compute and plot manual prediction for comparison. Default: True.")
     parser.add_argument('--verbose', type=bool, default=True, help="Print debug messages. Default: True.")
     
     #don't mix up with --ros-args

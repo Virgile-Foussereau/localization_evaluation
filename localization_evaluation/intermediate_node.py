@@ -88,13 +88,6 @@ class intermediate(Node):
             self.get_logger().info(msg)
         else:
             self.get_logger().debug(msg)
-    
-    def check_area(self, x, y, area):
-        #check if point (x, y) is inside area
-        #area is a list of 4 points (x, y)
-        #area must be clockwise
-        #starting from upper left corner
-        inside = x 
 
     
     def gps_pose_callback(self, msg):
@@ -119,9 +112,9 @@ class intermediate(Node):
             delta_t = (time_ns - self.last_random_gps_denied_end) / 1e9
             prob = 1 - np.exp(-delta_t / 1000)
             if np.random.rand() < prob:
-                #create a new gps denied zone of random length between 0.5 and 2 seconds
+                #create a new gps denied zone of random length between 2 and 5 seconds
                 self.last_random_gps_denied_start = time_ns
-                self.last_random_gps_denied_end = time_ns + (np.random.rand() * 1.5 + 0.5) * 1e9
+                self.last_random_gps_denied_end = time_ns + (np.random.rand() * 3 + 2) * 1e9
                 self.gps_denied_time_intervals = [[self.last_random_gps_denied_start, self.last_random_gps_denied_end]]
                 self.log('Random gps denied zone created from ' + str((self.last_random_gps_denied_start-self.time_first_gps)/1e9) + ' to ' + str((self.last_random_gps_denied_end-self.time_first_gps)/1e9) + ', current time: ' + str((time_ns-self.time_first_gps)/1e9))
                 self.gps_poses_denied.append([])
@@ -216,35 +209,6 @@ class intermediate(Node):
         fused_poses_gps_denied = [np.array(zone) for zone in self.fused_poses_gps_denied]
         manual_predictions = np.array(self.manual_predictions)
         manual_predictions_gps_denied = [np.array(zone) for zone in self.manual_predictions_gps_denied]
-
-        #compute errors between fused and gps when time is the closest
-        errors = []
-        for i in range(len(fused_poses)):
-            #find closest gps pose
-            closest_index = np.argmin(np.abs(gps_poses[:,2] - fused_poses[i][2]))
-            errors.append(np.linalg.norm(fused_poses[i][:2] - gps_poses[closest_index][:2]))
-        errors = np.array(errors)
-        self.get_logger().info('Error analysis for entire trajectory:')
-        self.get_logger().info('Mean error: ' + str(np.mean(errors)))
-        self.get_logger().info('Max error: ' + str(np.max(errors)))
-        self.get_logger().info('Min error: ' + str(np.min(errors)))
-        self.get_logger().info('Std error: ' + str(np.std(errors)))
-
-        #Error analysis for gps denied zone
-        if len(gps_poses_denied) > 0:
-            errors = []
-            for i in range(len(gps_poses_denied)):
-                #zone i+1
-                for j in range(len(gps_poses_denied[i])):
-                    #find closest fused pose for each gps pose in the zone
-                    closest_index = np.argmin(np.abs(fused_poses_gps_denied[i][:,2] - gps_poses_denied[i][j][2]))
-                    errors.append(np.linalg.norm(fused_poses_gps_denied[i][closest_index][:2] - gps_poses_denied[i][j][:2]))
-            errors = np.array(errors)
-            self.get_logger().info('Error analysis for gps denied zone:')
-            self.get_logger().info('Mean error: ' + str(np.mean(errors)))
-            self.get_logger().info('Max error: ' + str(np.max(errors)))
-            self.get_logger().info('Min error: ' + str(np.min(errors)))
-            self.get_logger().info('Std error: ' + str(np.std(errors)))
                 
 
         if self.args.show_plot or self.args.save_plot is not None:
@@ -258,6 +222,15 @@ class intermediate(Node):
             axs[0].plot(gps_poses[:,0], gps_poses[:,1], label='gps')
             axs[0].plot(fused_poses[:,0], fused_poses[:,1], label='fused')
             axs[0].plot(manual_predictions[:,0], manual_predictions[:,1], label='manual prediction')
+
+            if self.gps_denied_areas is not None:
+                for i in range(len(self.gps_denied_areas)):
+                    area = self.gps_denied_areas[i]
+                    #plot area with alpha=0.5
+                    if i == 0:
+                        axs[0].fill([area.cx - area.w/2, area.cx + area.w/2, area.cx + area.w/2, area.cx - area.w/2], [area.cy - area.h/2, area.cy - area.h/2, area.cy + area.h/2, area.cy + area.h/2], alpha=0.5, color='r', label='gps denied areas')
+                    else:
+                        axs[0].fill([area.cx - area.w/2, area.cx + area.w/2, area.cx + area.w/2, area.cx - area.w/2], [area.cy - area.h/2, area.cy - area.h/2, area.cy + area.h/2, area.cy + area.h/2], alpha=0.5, color='r')
             # axs[0].axvline(x=gps_poses_denied[0][0], color='r', linestyle='--', label='gps denied')
             # axs[0].axvline(x=gps_poses_denied[-1][0], color='r', linestyle='--')
             axs[0].set_title('Full Trajectory')
@@ -287,6 +260,34 @@ class intermediate(Node):
                 plt.show()
             self.get_logger().info('Plot done!')
 
+        #compute errors between fused and gps when time is the closest
+        errors = []
+        for i in range(len(fused_poses)):
+            #find closest gps pose
+            closest_index = np.argmin(np.abs(gps_poses[:,2] - fused_poses[i][2]))
+            errors.append(np.linalg.norm(fused_poses[i][:2] - gps_poses[closest_index][:2]))
+        errors = np.array(errors)
+        self.get_logger().info('Error analysis for entire trajectory:')
+        self.get_logger().info('Mean error: ' + str(np.mean(errors)))
+        self.get_logger().info('Max error: ' + str(np.max(errors)))
+        self.get_logger().info('Min error: ' + str(np.min(errors)))
+        self.get_logger().info('Std error: ' + str(np.std(errors)))
+
+        #Error analysis for gps denied zone
+        if len(gps_poses_denied) > 0:
+            errors = []
+            for i in range(len(gps_poses_denied)):
+                #zone i+1
+                for j in range(len(gps_poses_denied[i])):
+                    #find closest fused pose for each gps pose in the zone
+                    closest_index = np.argmin(np.abs(fused_poses_gps_denied[i][:,2] - gps_poses_denied[i][j][2]))
+                    errors.append(np.linalg.norm(fused_poses_gps_denied[i][closest_index][:2] - gps_poses_denied[i][j][:2]))
+            errors = np.array(errors)
+            self.get_logger().info('Error analysis for gps denied zone:')
+            self.get_logger().info('Mean error: ' + str(np.mean(errors)))
+            self.get_logger().info('Max error: ' + str(np.max(errors)))
+            self.get_logger().info('Min error: ' + str(np.min(errors)))
+            self.get_logger().info('Std error: ' + str(np.std(errors)))
  
 def main(args=None):
 
@@ -294,7 +295,7 @@ def main(args=None):
     parser.add_argument('--time_interval_gps_denied', '-t', nargs='+' , type=int, default=None, help='List of time intervals (relative to first gps message received) in seconds where gps is denied. Example: -t 30 60 90 120 will create 2 gps denied zones: 30s to 60s and 90s to 120s. Default: None.')
     parser.add_argument('--areas_gps_denied', '-a', nargs='+' , type=float, default=None, help='List of areas with center coordinates, widht and height x1 y1 w h .... (in meters) where gps is denied. Make sure to start Example: -a 0 0 10 10 will create a gps denied zone of 10x10m centered on (0,0). Default: None.')
     parser.add_argument('--random_gps_denied', type=bool, default=False, help='Randomly set gps denied zones. Default: False.')
-    parser.add_argument('--show_plot', type=bool, default=True, help='Show plot after execution. Default: True.')
+    parser.add_argument('--show_plot', type=bool, default=False, help='Show plot after execution. Default: False.')
     parser.add_argument('--save_plot', type=str, default='results_localization_test', help="Specifiy the file name to save the plot. Use 'None' to not save the plot. Default: results_localization_test.png.")
     parser.add_argument('--manual_prediction', type=bool, default=True, help="Compute and plot manual prediction for comparison. Default: True.")
     parser.add_argument('--verbose', type=bool, default=True, help="Print debug messages. Default: True.")
@@ -306,7 +307,7 @@ def main(args=None):
     assert args_node.time_interval_gps_denied is None or len(args_node.time_interval_gps_denied) % 2 == 0, 'time_interval_gps_denied must be a list of even length or None'
 
     #check areas_gps_denied is a list of multiples of 4 elements or None
-    assert args_node.areas_gps_denied is None or len(args_node.areas_gps_denied) == 4, 'areas_gps_denied must be a list of k*4 elements or None'
+    assert args_node.areas_gps_denied is None or len(args_node.areas_gps_denied) % 4 == 0, 'areas_gps_denied must be a list of k*4 elements or None. It is currently of len: ' + str(len(args_node.areas_gps_denied))
 
     #check that only one of time_interval_gps_denied, areas_gps_denied and random_gps_denied is used
     assert (args_node.time_interval_gps_denied is None) + (args_node.areas_gps_denied is None) + (not args_node.random_gps_denied) == 2, 'Only one of time_interval_gps_denied, areas_gps_denied and random_gps_denied can be used'

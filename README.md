@@ -49,11 +49,11 @@ You can configure the behavior of the evaluation node using command line argumen
 
 - `--time_interval_gps_denied` (`-t`): Specify a list of time intervals (relative to the first GPS message received) in seconds when GPS is denied. For example, `-t 30 60 90 120` will create two GPS denied zones: 30s to 60s and 90s to 120s. By default, this option is None.
 
-- `--areas_gps_denied` (`-a`): Specify a list of areas with center coordinates, width, and height (in meters) where GPS is denied. For example, `-a 0 0 10 10` will create a GPS denied zone of 10x10m centered on (0,0). By default, this option is None.
+- `--areas_gps_denied` (`-a`): Specify a list of areas with center coordinates, width, and height (in meters) where GPS is denied. For example, `-a 0 0 10 10 25 25 5 5` will create a GPS denied zone of 10x10m centered on (0,0) and another one of 5x5m centered on (25,25). By default, this option is None.
 
-- `--random_gps_denied`: Use this flag to randomly set GPS denied zones. The probability (`prob`) of a new GPS denied zone appearing is calculated using an exponential growth model, where `prob` increases with the time since the last GPS denied zone. By default, this option is disabled.
+- `--random_gps_denied`: Use this flag to randomly set GPS denied zones. The probability (`prob`) of a new GPS denied zone appearing is calculated using an exponential growth model, where `prob` increases with the time since the last GPS denied zone. The duration of each GPS denied zone is random between 2s and 5s. By default, this option is disabled.
 
-- `--show_plot`: Use this flag to display a plot of the evaluation results after execution. By default, the plot is shown.
+- `--show_plot`: Use this flag to display a plot of the evaluation results after execution. By default, the plot is not shown.
 
 - `--save_plot`: Specify the file name to save the plot. Use 'None' to prevent saving the plot. By default, the plot is saved to `results_localization_test.png`.
 

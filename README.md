@@ -81,4 +81,4 @@ The evaluation node provides statistics such as mean error, maximum error, minim
 Here's an example command to run the evaluation node with specific settings:
 
 ```bash
-ros2 run localization_evaluation localization_evaluation_node --random_gps_denied true --save_plot plot_run_3
+ros2 run localization_evaluation intermediate_node --random_gps_denied true --save_plot plot_run_3
